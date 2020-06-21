@@ -37,3 +37,30 @@ const main = async () => {
 
 main()
 ```
+
+## Events
+
+You can subscribe to events for an apoq instance.
+
+### `task.completed`
+
+This event is emitted after a task has been completed and the task's transaction has committed. It receives the completed task as an argument.
+
+```js
+apoq.events.on("task.completed", (task) => {
+  console.log(`✨ task ${task.id} complete`)
+})
+```
+
+### `task.failed`
+
+This event is emitted when a task fails, eg. the task processor function threw an error. It receives the failed task and the error as arguments.
+
+The task will be in the `failed` state, and will not be retried automatically.
+
+```js
+apoq.events.on("task.failed", (task, error) => {
+  console.log(`💥 task ${task.id} failed...`)
+  console.error(error)
+})
+```
