@@ -1,4 +1,4 @@
-import Apoq from "./index"
+import { Apoq } from "./index"
 
 const MESSAGES = ["💖", "🧡", "💛", "💚", "💙"]
 const randomColor = () => MESSAGES[Math.floor(Math.random() * MESSAGES.length)]

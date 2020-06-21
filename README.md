@@ -5,7 +5,7 @@
 ## Example
 
 ```js
-const Apoq = require("apoq")
+const { Apoq } = require("apoq")
 
 const MESSAGES = ["💖", "🧡", "💛", "💚", "💙"]
 const randomColor = () => MESSAGES[Math.floor(Math.random() * MESSAGES.length)]

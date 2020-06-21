@@ -12,7 +12,7 @@ interface TaskProcessor {
 
 export const DEFAULT_TASK_TABLE = "apoq_tasks"
 
-export default class Apoq {
+export class Apoq {
   private pool: Pool
   private taskConfig: TaskConfig = {}
   private isRunning = false
