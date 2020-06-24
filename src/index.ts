@@ -118,7 +118,8 @@ export class Apoq {
     }
   }
 
-  stop(): void {
+  async stop(): Promise<void> {
     this.isRunning = false
+    await this.pool.end()
   }
 }
