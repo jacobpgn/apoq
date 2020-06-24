@@ -1,4 +1,4 @@
-import { Pool } from "pg"
+import { Pool, PoolConfig } from "pg"
 import { EventEmitter } from "events"
 import { migrate } from "./migrate"
 
@@ -18,8 +18,15 @@ export class Apoq {
   private isRunning = false
   events: EventEmitter = new EventEmitter()
 
-  constructor(connectionString: string) {
-    this.pool = new Pool({ connectionString, application_name: "apoq" })
+  constructor(connectionConfig: PoolConfig | string) {
+    let poolConfig: PoolConfig
+    if (typeof connectionConfig === "string") {
+      poolConfig = { connectionString: connectionConfig }
+    } else {
+      poolConfig = { ...connectionConfig }
+    }
+
+    this.pool = new Pool({ ...poolConfig, application_name: "apoq" })
   }
 
   async prepare(): Promise<void> {
