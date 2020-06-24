@@ -4,7 +4,7 @@ const MESSAGES = ["💖", "🧡", "💛", "💚", "💙"]
 const randomColor = () => MESSAGES[Math.floor(Math.random() * MESSAGES.length)]
 
 const main = async () => {
-  const apoq = new Apoq("postgres://jacobpargin:@localhost/apoq_dev")
+  const apoq = new Apoq("postgres://localhost/apoq_dev")
 
   // Prepare the database tables to record tasks
   await apoq.prepare()
