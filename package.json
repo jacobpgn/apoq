@@ -1,6 +1,6 @@
 {
   "name": "apoq",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "PostgreSQL-backed Node.js task queue",
   "main": "build/index.js",
   "types": "build/index.d.ts",

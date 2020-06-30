@@ -1,4 +1,4 @@
-import { Pool, PoolConfig } from "pg"
+import { Pool, PoolClient, PoolConfig } from "pg"
 import { EventEmitter } from "events"
 import { migrate } from "./migrate"
 
@@ -33,8 +33,12 @@ export class Apoq {
     await migrate(this.pool, { taskTable: DEFAULT_TASK_TABLE })
   }
 
-  async add(type: string, data: unknown): Promise<{ id: string }> {
-    const insertResult = await this.pool.query(
+  async add(
+    type: string,
+    data: unknown,
+    { client = this.pool }: { client?: Pool | PoolClient } = {}
+  ): Promise<{ id: string }> {
+    const insertResult = await client.query(
       ` INSERT INTO ${DEFAULT_TASK_TABLE} (type, data)
         VALUES ($1, $2)
         RETURNING *`,
