@@ -7,10 +7,11 @@ interface TaskConfig {
 }
 
 interface TaskProcessor {
-  ({ data }: { data: any }): Promise<void>
+  ({ id, data }: { id: number; data: any }): Promise<void>
 }
 
 export const DEFAULT_TASK_TABLE = "apoq_tasks"
+const DEFAULT_CONCURRENCY = 4
 
 export class Apoq {
   private pool: Pool
@@ -108,18 +109,28 @@ export class Apoq {
     return 1
   }
 
-  async start(): Promise<void> {
+  async start({
+    concurrency = DEFAULT_CONCURRENCY,
+  }: {
+    concurrency?: number
+  } = {}): Promise<void> {
     this.isRunning = true
 
-    while (this.isRunning) {
-      const result = await this.work()
+    await Promise.all(
+      Array(concurrency)
+        .fill(null)
+        .map(async () => {
+          while (this.isRunning) {
+            const result = await this.work()
 
-      if (result === 0) {
-        await new Promise((resolve) => {
-          setTimeout(resolve, 2000)
+            if (result === 0) {
+              await new Promise((resolve) => {
+                setTimeout(resolve, 2000)
+              })
+            }
+          }
         })
-      }
-    }
+    )
   }
 
   async stop(): Promise<void> {
