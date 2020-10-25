@@ -1,0 +1,17 @@
+name: Build
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v2-beta
+      with:
+        node-version: '12'
+        registry-url: 'https://registry.npmjs.org'
+    - run: npm install
+    - name: Run ESLint
+      run: npm run lint
+    - name: Compile TypeScript
+      run: npm run build
