@@ -1,4 +1,4 @@
-name: Build
+name: Build and test
 on: push
 
 jobs:
@@ -10,8 +10,10 @@ jobs:
       with:
         node-version: '12'
         registry-url: 'https://registry.npmjs.org'
-    - run: npm install
+    - run: npm ci
     - name: Run ESLint
       run: npm run lint
     - name: Compile TypeScript
       run: npm run build
+    - name: Run tests
+      run: npm test
