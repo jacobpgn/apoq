@@ -4,6 +4,21 @@ on: push
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13-alpine
+        env:
+          POSTGRES_PASSWORD: test_pg_pass
+          POSTGRES_USER: test_pg_user
+          POSTGRES_DB: apoq_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v2-beta
@@ -17,3 +32,5 @@ jobs:
       run: npm run build
     - name: Run tests
       run: npm test
+      env:
+        TEST_CONNECTION_STRING: postgres://test_pg_user:test_pg_pass@localhost/apoq_test
