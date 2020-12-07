@@ -2,7 +2,7 @@
 
 **A** **Po**stgreSQL **Q**ueue for processing background tasks, with a focus on simplicity and reliability.
 
-## Example
+# Example
 
 ```js
 const { Apoq } = require("apoq")
@@ -37,6 +37,96 @@ const main = async () => {
 
 main()
 ```
+
+# Usage
+
+## Configuration and setup
+
+Initialize an instance of apoq with a connection string or an object of [options](https://node-postgres.com/features/connecting#programmatic) that the [`pg`](https://node-postgres.com) library accepts, for example:
+
+```js
+const { Apoq } = require("apoq")
+
+const apoq = new Apoq(process.env.DATABASE_URL)
+```
+
+or
+
+```js
+const { Apoq } = require("apoq")
+
+const apoq = new Apoq({
+  user: 'postgres',
+  host: 'localhost',
+  database: 'app',
+  password: 'shhh!',
+  port: 5432,
+})
+```
+
+## Migrating the database
+
+The library manages 2 tables (`apoq_tasks` and `apoq_migrations`), and the `prepare()` function takes care of running any pending migrations against an apoq instance. You need to run this before using the library; for convenience, you might choose to run it automatically during deployments on when your app starts.
+
+```js
+const { Apoq } = require("apoq")
+
+const apoq = new Apoq(process.env.DATABASE_URL)
+await apoq.prepare()
+```
+
+## Instance functions
+
+### `add`
+```js
+add(type: string, data: object)
+```
+
+Add a task to the queue. The `type` is used by workers to determine what to do when processing this task, so you'll probably want to use it to either label the work to be done (e.g. `sendWelcomeEmail`) or as an event name (e.g. `user.created`).
+
+The `data` object can hold any additional information for the task processor, e.g. `{ userId: 123 }`. It'll be stored in a JSONB column.
+
+```js
+apoq.add("logMessage", { foo: "bar!" })
+```
+
+### `use`
+```js
+use(type: string, processor: function)
+```
+
+Configures a processor function this worker should use for a specific type of task. The worker will call the `processor` function for each task we `add` with the same `type`.
+
+```js
+const processor = (args) => {
+  console.log(`Message: ${args.data.foo}`)
+}
+
+apoq.use("logMessage", processor)
+```
+
+### `start`
+```js
+await apoq.start()
+```
+
+Starts a worker, which will check for all task types configured with `use` and run their functions for you.
+
+### `work`
+```js
+await apoq.work()
+```
+
+Transactionally works the next configured task in the queue. This will run a single task then resolve, marking the task as completed or failed. If there are no tasks, it'll resolve.
+
+Most of the time you'll want to use `start` instead, as `start` continues to run (or wait for) tasks until the worker is stopped while `work` only runs a single task.
+
+### `stop`
+```js
+await apoq.stop()
+```
+
+Stops a worker started with `start`. Any tasks that are already actively being processed by the worker will continue until they complete or fail, but no more tasks will be started.
 
 ## Events
 
