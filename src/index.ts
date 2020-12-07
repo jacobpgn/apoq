@@ -7,7 +7,7 @@ interface TaskConfig {
 }
 
 interface TaskProcessor {
-  ({ id, data }: { id: number; data: any }): Promise<void>
+  ({ id, data }: { id: number; data: any }): Promise<void> | void
 }
 
 export const DEFAULT_TASK_TABLE = "apoq_tasks"
@@ -53,7 +53,7 @@ export class Apoq {
     this.taskConfig[type] = { processor }
   }
 
-  private async work() {
+  async work() {
     const client = await this.pool.connect()
 
     await client.query("BEGIN")
