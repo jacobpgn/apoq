@@ -63,4 +63,8 @@ const getMigrations = (migrationTable: string, taskTable: string) => [
       CREATE INDEX apoq_tasks_state_idx ON ${taskTable}(state);
     `,
   },
+  {
+    version: 2,
+    up: `ALTER TABLE ${taskTable} ADD COLUMN fail_count int NOT NULL DEFAULT 0;`,
+  },
 ]

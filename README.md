@@ -93,6 +93,8 @@ apoq.add("logMessage", { foo: "bar!" })
 ### `use`
 ```js
 use(type: string, processor: function)
+
+use(type: string, processor: function, options: { retryDelay: function, retryLimit: number })
 ```
 
 Configures a processor function this worker should use for a specific type of task. The worker will call the `processor` function for each task we `add` with the same `type`.
@@ -103,6 +105,22 @@ const processor = (args) => {
 }
 
 apoq.use("logMessage", processor)
+```
+
+You can also provide retry options to indicate how the worker should deal with tasks the fail. By default task processors have a `retryLimit` of `5`, so they will retry a task up to 5 times (for a total of 6 attempts) if it fails. `retryDelay` is a function which takes the current number of failures and determines how many seconds to wait before the next attempt. The default `retryDelay` function exponentially backs off with jitter.
+
+Here's an example of a simple custom retry delay which will retry 2 seconds after the first failure, 4 seconds after the second failure, 6 seconds after the third failure, then give up because of the limit:
+
+```js
+const processor = async (args) => {
+  await fetch("https://flaky.example")
+}
+
+const retryDelay = (failCount) => {
+  return failCount * 2
+}
+
+apog.use("pingFlakyApi", processor, { retryLimit: 3, retryDelay })
 ```
 
 ### `start`
