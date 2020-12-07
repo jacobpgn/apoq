@@ -3,11 +3,16 @@ import { EventEmitter } from "events"
 import { migrate } from "./migrate"
 
 interface TaskConfig {
-  [taskName: string]: { processor: TaskProcessor }
+  [taskName: string]: { processor: TaskProcessor; options: TaskProcessorOpts }
 }
 
 interface TaskProcessor {
   ({ id, data }: { id: number; data: any }): Promise<void> | void
+}
+
+interface TaskProcessorOpts {
+  retryDelay?: (failCount: number) => Promise<number> | number
+  retryLimit?: number
 }
 
 export const DEFAULT_TASK_TABLE = "apoq_tasks"
@@ -49,8 +54,19 @@ export class Apoq {
     return { id: insertResult.rows[0].id }
   }
 
-  use(type: string, processor: TaskProcessor): void {
-    this.taskConfig[type] = { processor }
+  use(
+    type: string,
+    processor: TaskProcessor,
+    options: TaskProcessorOpts = {}
+  ): void {
+    const processorOptions = {
+      retryLimit: 5,
+      retryDelay: (failCount) =>
+        Math.floor(Math.random() * Math.pow(2, Math.min(failCount, 7)) + 1),
+      ...options,
+    }
+
+    this.taskConfig[type] = { processor, options: processorOptions }
   }
 
   async work() {
@@ -77,8 +93,10 @@ export class Apoq {
       return 0
     }
 
+    const config = this.taskConfig[task.type]
+
     try {
-      await this.taskConfig[task.type].processor(task)
+      await config.processor(task)
 
       const updateResult = await client.query(
         ` UPDATE ${DEFAULT_TASK_TABLE}
@@ -93,20 +111,49 @@ export class Apoq {
 
       this.events.emit("task.completed", updateResult.rows[0])
     } catch (e) {
-      const updateResult = await client.query(
-        ` UPDATE ${DEFAULT_TASK_TABLE}
-          SET state = 'failed'
-          WHERE id = $1
-          RETURNING *`,
-        [task.id]
-      )
+      const failResult = await this.failTask(task, config.options, client)
+
       await client.query("COMMIT")
 
-      this.events.emit("task.failed", updateResult.rows[0], e)
+      this.events.emit("task.failed", failResult.rows[0], e)
+    } finally {
+      client.release()
     }
 
-    client.release()
     return 1
+  }
+
+  private async failTask(
+    task,
+    options: TaskProcessorOpts,
+    client: PoolClient
+  ): Promise<any> {
+    const failCount = task.fail_count + 1
+
+    if (failCount > options.retryLimit) {
+      const updateResult = await client.query(
+        ` UPDATE ${DEFAULT_TASK_TABLE}
+          SET state = 'failed',
+              fail_count = $1
+          WHERE id = $2
+          RETURNING *`,
+        [failCount, task.id]
+      )
+      return updateResult
+    }
+
+    const retryDelay = (await options.retryDelay(failCount)) || 0
+
+    const updateResult = await client.query(
+      ` UPDATE ${DEFAULT_TASK_TABLE}
+        SET process_at = NOW() + $1 * INTERVAL '1',
+            fail_count = $2
+        WHERE id = $3
+        RETURNING *`,
+      [retryDelay, failCount, task.id]
+    )
+
+    return updateResult
   }
 
   async start({
