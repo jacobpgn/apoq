@@ -12,7 +12,7 @@ const PG_POOL = new Pool({
 
 export const pgPool = () => PG_POOL
 
-export const withApoq = async (fn: (apoq: Apoq) => Promise<any>) => {
+export const withApoq = async (fn: (apoq: Apoq) => Promise<any> | void) => {
   const apoqInstance = new Apoq(TEST_CONNECTION_STRING)
   const result = await fn(apoqInstance)
   await apoqInstance.stop()
