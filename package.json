@@ -34,7 +34,7 @@
   "homepage": "https://github.com/jacobpgn/apoq#readme",
   "devDependencies": {
     "@types/jest": "^29.5.12",
-    "@types/node": "^16.6.1",
+    "@types/node": "^20.11.17",
     "@types/pg": "^8.11.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
