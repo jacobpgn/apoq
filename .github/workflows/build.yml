@@ -20,17 +20,17 @@ jobs:
         ports:
           - 5432:5432
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v2-beta
-      with:
-        node-version: '20'
-        registry-url: 'https://registry.npmjs.org'
-    - run: npm ci
-    - name: Run ESLint
-      run: npm run lint
-    - name: Compile TypeScript
-      run: npm run build
-    - name: Run tests
-      run: npm test
-      env:
-        TEST_CONNECTION_STRING: postgres://test_pg_user:test_pg_pass@localhost/apoq_test
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2-beta
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+      - run: npm ci
+      - name: Run ESLint
+        run: npm run lint
+      - name: Compile TypeScript
+        run: npm run build
+      - name: Run tests
+        run: npm test
+        env:
+          TEST_CONNECTION_STRING: postgres://test_pg_user:test_pg_pass@localhost/apoq_test
