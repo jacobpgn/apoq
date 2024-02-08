@@ -1,16 +1,16 @@
-import { Pool } from "pg"
+import { Pool } from "pg";
 
-const ADVISORY_LOCK_KEY = "097112111113"
-const DEFAULT_MIGRATION_TABLE = "apoq_migrations"
+const ADVISORY_LOCK_KEY = "097112111113";
+const DEFAULT_MIGRATION_TABLE = "apoq_migrations";
 
 export const migrate = async (
   pool: Pool,
   {
     migrationTable = DEFAULT_MIGRATION_TABLE,
     taskTable,
-  }: { migrationTable?: string; taskTable: string }
+  }: { migrationTable?: string; taskTable: string },
 ): Promise<void> => {
-  const client = await pool.connect()
+  const client = await pool.connect();
 
   await client.query(
     ` BEGIN;
@@ -19,31 +19,31 @@ export const migrate = async (
         version integer NOT NULL,
         created_at timestamptz NOT NULL DEFAULT NOW(),
         UNIQUE(version)
-      );`
-  )
+      );`,
+  );
 
   const completedMigrations = (
     await client.query(`SELECT version FROM ${migrationTable}`)
-  ).rows.map((row) => row.version)
+  ).rows.map((row) => row.version);
 
   const pendingMigrations = getMigrations(migrationTable, taskTable).filter(
     (migration) => {
-      return !completedMigrations.includes(migration.version)
-    }
-  )
+      return !completedMigrations.includes(migration.version);
+    },
+  );
 
-  pendingMigrations.sort((a, b) => a.version - b.version)
+  pendingMigrations.sort((a, b) => a.version - b.version);
 
   for (const migration of pendingMigrations) {
-    await client.query(migration.up)
+    await client.query(migration.up);
     await client.query(`INSERT INTO ${migrationTable}(version) VALUES ($1)`, [
       migration.version,
-    ])
+    ]);
   }
 
-  await client.query("COMMIT")
-  client.release()
-}
+  await client.query("COMMIT");
+  client.release();
+};
 
 const getMigrations = (migrationTable: string, taskTable: string) => [
   {
@@ -67,4 +67,4 @@ const getMigrations = (migrationTable: string, taskTable: string) => [
     version: 2,
     up: `ALTER TABLE ${taskTable} ADD COLUMN fail_count int NOT NULL DEFAULT 0;`,
   },
-]
+];
